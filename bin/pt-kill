@@ -6709,7 +6709,15 @@ sub main {
    my $proc_sth;
    my $kill;          # callback to KILL
    my $kill_sth;
-   my $kill_sql = $o->get('kill-query') ? 'KILL QUERY ?' : 'KILL ?';
+   my $kill_sql;
+   if ( $o->get('kill-query') ) {
+     if ( $o->get('aws-rds') ) {
+       $kill_sql = $o->get('kill-query') ? 'CALL mysql.rds_kill_query( ? )' : 'CALL mysql.rds_kill( ? )';
+     }
+     else {
+       $kill_sql = $o->get('kill-query') ? 'KILL QUERY ?' : 'KILL ?';
+     }
+   }
    my $files;
    if ( $files = $o->get('test-matching') ) {
       PTDEBUG && _d('Getting processlist from files:', @$files);
@@ -8096,6 +8104,12 @@ Print a KILL statement for matching queries; does not actually kill queries.
 If you just want to see which queries match and would be killed without
 actually killing them, specify L<"--print">.  To both kill and print
 matching queries, specify both L<"--kill"> and L<"--print">.
+
+=item --aws-rds
+
+group: Actions
+
+Use the special KILL statement syntax for an Amazon Web Services RDS instance.
 
 =back
 
